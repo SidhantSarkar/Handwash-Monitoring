@@ -15,6 +15,9 @@ with tf.gfile.FastGFile("tf_files/retrained_graph.pb", 'rb') as f:
     graph_def.ParseFromString(f.read())
     _ = tf.import_graph_def(graph_def, name='')
 
+# To keep a check on overall process
+steps = [["Step 2",0],["Step 3",0],["Step 4",0],["Step 5",0],["Step 6",0],["Step 7",0]]
+
 # Main loop body
 while(True):
     #read and write
@@ -34,13 +37,35 @@ while(True):
         # Sort to show labels of first prediction in order of confidence
         top_k = predictions[0].argsort()[-len(predictions[0]):][::-1]
 
-        for node_id in top_k:
-            human_string = label_lines[node_id]
-            score = predictions[0][node_id]
-            print('%s (score = %.5f)' % (human_string, score))
+    # Top prediction
+    result = label_lines[top_k[0]]
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+
+    elif (result != "No Hands"):
+        currentStep = 0
+
+        # Detects step to be completed
+        for currentStep in range(len(steps)):
+            if (steps[currentStep][1] != 5):
+                break
+
+        # Checks if prediction matches with step to be done
+        if (result == steps[currentStep][0]):
+            steps[currentStep][1]+=1
+            # Flag for 5 seconds step completion
+            if (steps[currentStep][1] == 5):
+                print(result + "completed successfully.")
+                print("Move onto step " + currentStep+3)
+
+        # Tells user to complete previous step
+        else:
+            print("Complete step " + currentStep + " for " + 5-steps[currentStep][1] + " seconds.")
+
+    # Tells user to place hands under cameraT
+    else:
+        print("Please place your hands under the camera.")
 
 # Destroy Camera instances
 cap.release()
